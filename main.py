@@ -26,6 +26,19 @@ def build_text() -> str:
     return "To: " + ADDRESSEE + "\n" + CONFESSION
 
 
+def validate(text: str) -> None:
+    """Guard the two-part shape before anything is written out."""
+    parts = text.split("\n")
+    if len(parts) != 2:
+        raise ValueError("entry must be exactly two lines")
+    if not parts[0].startswith("To: "):
+        raise ValueError("first line must be the To: line")
+    if not parts[1].strip():
+        raise ValueError("second line must hold the unsent message")
+    if len(text) > 260:
+        raise ValueError("entry exceeds the 260-char gate")
+
+
 def destination() -> Path:
     """Where the harness wants the entry: its env var, else /output."""
     wanted = os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output"
@@ -34,6 +47,7 @@ def destination() -> Path:
 
 def run() -> int:
     text = build_text()
+    validate(text)
     target = destination()
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
